@@ -1,11 +1,9 @@
-// Plak hier de config van je Firebase-web-app (Projectinstellingen > Je apps > SDK-configuratie).
-// Deze gegevens zijn niet geheim: de toegang wordt geregeld door de Firestore-regels.
-// Laat je dit zo staan, dan werkt de site gewoon, maar bewaart hij trips alleen op het eigen toestel.
+// Firebase-config van het project "camperwijzer" (niet geheim: toegang wordt geregeld in firestore.rules).
 window.FIREBASE_CONFIG = {
-  apiKey: "VUL_IN",
-  authDomain: "VUL_IN.firebaseapp.com",
-  projectId: "VUL_IN",
-  storageBucket: "VUL_IN.appspot.com",
-  messagingSenderId: "VUL_IN",
-  appId: "VUL_IN"
+  apiKey: "AIzaSyD25wI4ETPbqBuv6fH2siUw-ztWsnaXWvw",
+  authDomain: "camperwijzer.firebaseapp.com",
+  projectId: "camperwijzer",
+  storageBucket: "camperwijzer.firebasestorage.app",
+  messagingSenderId: "721052723548",
+  appId: "1:721052723548:web:b24aa4eac8aa24a3e67999"
 };
