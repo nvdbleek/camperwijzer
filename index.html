@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Camperwijzer I338</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: donkere kopbalk met tabs (Trips · Handleiding · Landen) → tegeloverzicht → detail met stappen of afvinklijsten; één kolom op telefoon */
+:root{
+  --bg:#F6F7F4; --surface:#FFFFFF; --ink:#18231F; --muted:#4F5F59; --line:#D5DCD7;
+  --spruce:#1F3A34; --spruce-soft:#E6EFEA; --signal:#C9561B; --signal-soft:#FCEBDF;
+  --ice:#1E5C8C; --ice-soft:#E3EEF7; --sun:#A34A0E; --sun-soft:#FDEBD8; --sea:#0B6670; --sea-soft:#DDF0F1;
+  --warn-bg:#FFF4E2; --warn-line:#B86A00; --warn-ink:#5B3600;
+  --bad-bg:#FDECEA; --bad-line:#B3261E; --bad-ink:#5F1410;
+  --ok:#2E7D4F; --head-ink:#FFFFFF; --head-accent:#F4A877; --on-signal:#FFFFFF;
+  --f-display:"Archivo", "Arial Narrow", Arial, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121816; --surface:#1A2320; --ink:#E7EEEA; --muted:#A3B3AC; --line:#2E3B37;
+  --spruce:#0E1F1B; --spruce-soft:#20302B; --signal:#F08A4B; --signal-soft:#3A2418;
+  --ice:#86BDE8; --ice-soft:#1B2A36; --sun:#F3A35F; --sun-soft:#3A2614; --sea:#6FCBD3; --sea-soft:#14302F;
+  --warn-bg:#2E2412; --warn-line:#E0A040; --warn-ink:#F4DDB4;
+  --bad-bg:#3A1714; --bad-line:#F08A80; --bad-ink:#F9D3CF;
+  --ok:#7BCB98; --head-ink:#F2F6F4; --head-accent:#F4A877; --on-signal:#1A0E06; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121816; --surface:#1A2320; --ink:#E7EEEA; --muted:#A3B3AC; --line:#2E3B37;
+  --spruce:#0E1F1B; --spruce-soft:#20302B; --signal:#F08A4B; --signal-soft:#3A2418;
+  --ice:#86BDE8; --ice-soft:#1B2A36; --sun:#F3A35F; --sun-soft:#3A2614; --sea:#6FCBD3; --sea-soft:#14302F;
+  --warn-bg:#2E2412; --warn-line:#E0A040; --warn-ink:#F4DDB4;
+  --bad-bg:#3A1714; --bad-line:#F08A80; --bad-ink:#F9D3CF;
+  --ok:#7BCB98; --head-ink:#F2F6F4; --head-accent:#F4A877; --on-signal:#1A0E06; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}body{padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{background:var(--spruce);color:var(--head-ink)}
+header .wrap{padding-block:24px 0;display:flex;flex-direction:column;gap:12px}
+.eyebrow{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--head-accent)}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,6vw,44px);line-height:1.02;margin:0}
+.specs{display:flex;flex-wrap:wrap;gap:8px}
+.spec{border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:3px 12px;font-size:14px;font-variant-numeric:tabular-nums}
+.spec b{font-family:var(--f-display)}
+.spec.hi{background:var(--head-accent);color:#1F1208;border-color:var(--head-accent)}
+nav.tabs{display:flex;gap:4px;margin-top:6px;overflow-x:auto}
+nav.tabs button{font:inherit;font-family:var(--f-display);font-weight:800;font-size:16px;color:var(--head-ink);background:transparent;border:0;border-bottom:4px solid transparent;padding:12px 14px;cursor:pointer;min-height:48px;opacity:.8;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{border-bottom-color:var(--head-accent);opacity:1}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,label.pick:focus-within{outline:3px solid var(--signal);outline-offset:2px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-block:18px 6px}
+.search{flex:1 1 240px;min-width:0;position:relative}
+.search input{width:100%;font:inherit;padding:11px 14px 11px 40px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-weight:700;font-size:15px;padding:9px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.group-h{font-family:var(--f-display);font-weight:800;font-size:14px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+.group-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.card{display:flex;gap:12px;align-items:flex-start;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;min-width:0;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--signal);transform:translateY(-1px)}
+.ic{flex:none;width:42px;height:42px;border-radius:10px;display:grid;place-items:center;background:var(--spruce-soft);color:var(--ink)}
+.card.w .ic{background:var(--ice-soft);color:var(--ice)}
+.card.z .ic{background:var(--sun-soft);color:var(--sun)}
+.card.m .ic{background:var(--sea-soft);color:var(--sea)}
+.cc{flex:none;width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.5px;background:var(--sea-soft);color:var(--sea)}
+.cc.big{width:54px;height:54px;font-size:18px}
+.card .ct{display:block;font-family:var(--f-display);font-weight:800;font-size:17px;line-height:1.2}
+.card .cs{display:block;margin-top:3px;font-size:14px;color:var(--muted);line-height:1.4}
+.pill{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.4px;padding:2px 9px;border-radius:999px;margin:6px 6px 0 0;background:var(--spruce-soft);color:var(--ink)}
+.pill.bad{background:var(--bad-bg);color:var(--bad-ink)}
+.pill.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.empty{padding:24px 0;color:var(--muted)}
+.view{padding-block:8px 40px}
+.detail{max-width:740px}
+.back{font:inherit;font-weight:700;background:none;border:none;color:var(--signal);cursor:pointer;padding:10px 0;min-height:44px;display:inline-flex;gap:6px;align-items:center}
+.d-head{display:flex;gap:14px;align-items:center;margin:6px 0 10px}
+.d-head .ic{width:54px;height:54px}
+.d-head h2{font-family:var(--f-display);font-weight:800;font-size:clamp(26px,5vw,34px);line-height:1.08;margin:0;text-wrap:balance}
+.d-head h2:focus{outline:none}
+.intro{font-size:17px;margin:0 0 16px;max-width:62ch}
+.sec-h{font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin:26px 0 8px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sec-h small{font-family:var(--f-body);font-weight:400;letter-spacing:0;text-transform:none;font-size:14px;font-variant-numeric:tabular-nums}
+ol.steps{list-style:none;padding:0;margin:0;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:36px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+ol.steps li::before{content:counter(s);width:32px;height:32px;border-radius:50%;background:var(--signal);color:var(--on-signal);font-family:var(--f-display);font-weight:800;display:grid;place-items:center;font-size:15px}
+ol.steps b,dl.rules dt{font-family:var(--f-display);font-weight:800}
+dl.rules{margin:0;display:grid;grid-template-columns:minmax(110px,160px) 1fr;border-top:1px solid var(--line)}
+dl.rules dt,dl.rules dd{margin:0;padding:10px 0;border-bottom:1px solid var(--line)}
+dl.rules dd{padding-left:12px;min-width:0}
+@media (max-width:520px){dl.rules{grid-template-columns:1fr}dl.rules dt{border-bottom:0;padding-bottom:0}dl.rules dd{padding-left:0;padding-top:2px}}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--signal);flex:none}
+.check .who{display:block;font-size:12.5px;color:var(--muted)}
+.check.done .txt{color:var(--muted);text-decoration:line-through}
+.check .del{margin-left:auto;font:inherit;font-size:13px;background:none;border:0;color:var(--muted);cursor:pointer;padding:4px 6px;min-height:32px}
+.btn{font:inherit;font-weight:700;font-size:15px;padding:9px 16px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}
+.btn.primary{background:var(--signal);border-color:var(--signal);color:var(--on-signal)}
+.btn.danger{border-color:var(--bad-line);color:var(--bad-line)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.warn,.bad,.info{border-radius:12px;padding:12px 16px;display:flex;gap:12px;margin:12px 0}
+.warn{background:var(--warn-bg);border:1.5px solid var(--warn-line);color:var(--warn-ink)}
+.bad{background:var(--bad-bg);border:1.5px solid var(--bad-line);color:var(--bad-ink)}
+.info{background:var(--spruce-soft);border:1.5px solid var(--line)}
+.warn svg,.bad svg,.info svg{flex:none;margin-top:2px}
+.warn p,.bad p,.info p{margin:0}
+ul.tips{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+ul.tips li{background:var(--spruce-soft);border-radius:10px;padding:10px 14px}
+.next{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.next .btn{flex:1 1 200px;text-align:left}
+/* trips */
+.trip-card .ct{font-size:19px}
+form.trip{display:flex;flex-direction:column;gap:18px;max-width:740px}
+.field label.l,.field .l{display:block;font-family:var(--f-display);font-weight:800;font-size:16px;margin-bottom:6px}
+.field input[type=text]{width:100%;font:inherit;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+label.pick{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;min-height:44px}
+label.pick input{accent-color:var(--signal);width:18px;height:18px;flex:none}
+label.pick .n{font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;color:var(--on-signal);background:var(--signal);border-radius:999px;padding:0 7px;margin-left:auto}
+label.pick.on{border-color:var(--signal);background:var(--signal-soft)}
+.route{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--f-display);font-weight:800}
+.route .arr{color:var(--muted)}
+.route .stop{background:var(--sea-soft);color:var(--sea);border-radius:8px;padding:2px 9px}
+.addrow{display:flex;gap:8px;margin-top:10px}
+.addrow input{flex:1;min-width:0;font:inherit;padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
+.status{font-size:13.5px;color:var(--muted)}
+.foot{color:var(--muted);font-size:13.5px;padding-block:24px 40px;border-top:1px solid var(--line);margin-top:24px}
+@media (max-width:560px){.chips{width:100%}.chip{flex:1 1 auto}.grid{grid-template-columns:1fr}.next .btn{flex-basis:100%}}
+@media (prefers-reduced-motion: reduce){.card{transition:none}.card:hover{transform:none}}
+</style>
+
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Carado I338 · automaat</div>
+    <h1>Camperwijzer</h1>
+    <div class="specs" aria-label="Belangrijkste maten">
+      <span class="spec">Lengte <b>≈ 7,0 m</b></span>
+      <span class="spec">Breedte <b>2,32 m</b></span>
+      <span class="spec hi">Hoogte <b>≈ 2,90 m</b></span>
+      <span class="spec">Max. <b>3.500 kg</b></span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Onderdelen">
+      <button role="tab" data-tab="trips" aria-selected="true">Mijn trips</button>
+      <button role="tab" data-tab="gids" aria-selected="false">Handleiding</button>
+      <button role="tab" data-tab="landen" aria-selected="false">Landen</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="v-trips" class="view"></section>
+  <section id="v-gids" class="view" hidden>
+    <div class="tools">
+      <label class="search" for="q">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Zoeken</span>
+        <input id="q" type="search" placeholder="Zoek, bv. cassette, gas, kettingen…" autocomplete="off">
+      </label>
+      <div class="chips" role="group" aria-label="Filter">
+        <button class="chip" data-f="alles" aria-pressed="true">Alles</button>
+        <button class="chip" data-f="basis" aria-pressed="false">Basis</button>
+        <button class="chip" data-f="zomer" aria-pressed="false">Zomer</button>
+        <button class="chip" data-f="winter" aria-pressed="false">Winter &amp; ski</button>
+        <button class="chip" data-f="reis" aria-pressed="false">Buitenland</button>
+      </div>
+    </div>
+    <div id="groups"></div>
+  </section>
+  <section id="v-landen" class="view" hidden></section>
+  <section id="v-detail" class="view detail" hidden></section>
+  <p class="foot">Volg bij twijfel de handleiding van je camper en apparaten. Regels, tolprijzen en milieuzones veranderen: controleer ze vlak voor vertrek bij de officiële bron of de ANWB. Exacte maten en gewichten staan op het kentekenbewijs. Noodnummer in heel Europa: <b>112</b>. Pechhulp NKC (SOS International): <b>+31 33 467 70 88</b>.</p>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+/* ---------- iconen ---------- */
+const ICONS={
+check:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+wheel:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M4.5 15.5l5.4-2.3M19.5 15.5l-5.4-2.3"/>',
+pin:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+plug:'<path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0zM12 17v5"/>',
+flame:'<path d="M12 22c4 0 7-3 7-7 0-4-3-6-4-9-1 2-2 3-4 3 0-2 0-4-1-6-3 3-5 7-5 12 0 4 3 7 7 7z"/>',
+drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+drain:'<path d="M4 5h16M6 5v4a6 6 0 0 0 12 0V5M12 15v6M8 21h8"/>',
+toilet:'<path d="M6 3h6v7H6zM4 10h16a8 8 0 0 1-8 8 8 8 0 0 1-8-8zM9 18l-1 3h8l-1-3"/>',
+fridge:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M5 9h14M9 5v2M9 12v4"/>',
+thermo:'<path d="M14 14V5a2 2 0 0 0-4 0v9a4 4 0 1 0 4 0z"/><path d="M12 9v7"/>',
+awning:'<path d="M3 6h18l-2 5H5zM5 11v9M19 11v9"/>',
+bed:'<path d="M3 19V7M3 13h18v6M21 19v-3M7 13v-3h5v3"/>',
+scale:'<path d="M6 20h12M12 4v16M4 8h16M4 8l-2.5 6a3 3 0 0 0 5 0zM20 8l-2.5 6a3 3 0 0 0 5 0z"/>',
+snow:'<path d="M12 2v20M3.3 7l17.4 10M20.7 7L3.3 17M9 4l3 2 3-2M9 20l3-2 3 2"/>',
+chain:'<path d="M10 14a4 4 0 0 1 0-5.6l2.8-2.8a4 4 0 0 1 5.6 5.6l-1.4 1.4M14 10a4 4 0 0 1 0 5.6l-2.8 2.8a4 4 0 0 1-5.6-5.6l1.4-1.4"/>',
+wind:'<path d="M3 8h11a3 3 0 1 0-3-3M3 16h14a3 3 0 1 1-3 3M3 12h8"/>',
+map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>',
+ski:'<path d="M4 20L20 4M8 21L21 8M6 15l3 3M13 8l3 3"/>',
+alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/>',
+info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
+tool:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
+sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+doc:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+bag:'<path d="M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2"/>',
+plus:'<path d="M12 5v14M5 12h14"/>'
+};
+const svg=(n,s=22)=>`<svg aria-hidden="true" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- handleiding ---------- */
+const T=[
+{id:'vertrek',cat:'basis',icon:'check',title:'Checklist vóór vertrek',sum:'Het rondje om de camper, elke keer.',
+ intro:'Loop dit lijstje af voor je de motor start. Na een paar keer gaat het vanzelf.',
+ steps:['<b>Dakluiken en ramen</b> dicht en vergrendeld.','<b>Kastjes, laden en koelkastdeur</b> op slot.','<b>Losse spullen</b> opgeborgen: tafel leeg, douchekop vast.','<b>Hefbed</b> omhoog en vergrendeld.','<b>Opstap</b> ingeschoven, <b>luifel</b> ingedraaid.','<b>Stroomkabel</b> los en opgeborgen, <b>oprijblokken</b> ingeladen.','<b>Toiletschuif</b> dicht.','<b>Vuilwater</b> geleegd, max. ± 20 L vers water aan boord.','<b>Bandenspanning</b> en spiegels gecontroleerd.','<b>Iemand buiten</b> om je achteruit te begeleiden.'],
+ warn:'De opstap en het dakluik vergeten is de klassieker. Kijk na het instappen nog één keer omhoog.'},
+{id:'rijden',cat:'basis',icon:'wheel',title:'Rijden met de automaat',sum:'Bochten, hoogte, bergaf en parkeren.',
+ intro:'Een camper van 7 meter rijdt makkelijker dan je denkt, maar reageert anders dan een auto.',
+ steps:['<b>Ruim insturen.</b> De achterkant zwaait in scherpe bochten uit naar buiten.','<b>Rij 90–100 km/u.</b> Rustiger, zuiniger en stabieler bij zijwind.','<b>Bergaf: handmatige stand.</b> Kies een lage versnelling, zodat de motor remt en je remmen koel blijven.','<b>Let op de hoogte.</b> ± 2,90 m: geen parkeergarages, kijk uit voor tunnels, takken en luifels.','<b>Parkeren:</b> pook in P, dan de handrem. Achteruit alleen met iemand buiten.','<b>Wissel af</b> om de 2 uur.'],
+ tips:['Houd veel meer afstand: de remweg is langer.','Bij harde zijwind: snelheid omlaag, beide handen aan het stuur.']},
+{id:'aankomst',cat:'basis',icon:'pin',title:'Aankomen & opstellen',sum:'Van plek kiezen tot waterpas staan.',
+ intro:'Zo zet je de camper in een paar minuten goed neer.',
+ steps:['<b>Plek kiezen.</b> Zo vlak mogelijk, niet onder dode takken.','<b>Waterpas.</b> Waterpas of app op de vloer; lage kant op de oprijblokken.','<b>Pook in P, handrem erop</b>, motor uit.','<b>Stroom aansluiten</b> (zie Stroom 230 V).','<b>Gas open</b>, koelkast en verwarming aan.','<b>Water bijvullen</b> als dat kan.','<b>Luifel uit</b> alleen als het windstil is.']},
+{id:'stroom',cat:'basis',icon:'plug',title:'Stroom 230 V',sum:'Aansluiten op de camping en de accu.',
+ intro:'Op de camping sluit je aan met een CEE-kabel (blauwe stekker). Zonder walstroom draait alles op de accu.',
+ steps:['<b>Kabel helemaal afrollen.</b> Een opgerolde kabel kan oververhit raken.','<b>Eerst de camper</b> aansluiten, daarna de paal.','<b>Controleer</b> op het paneel of er 230 V binnenkomt.','<b>Vertrek:</b> eerst de paal los, dan de camper.'],
+ warn:'Valt de stroom steeds uit? Dan vraag je te veel tegelijk. Niet tegelijk elektrisch verwarmen, waterkoker en föhn.',
+ tips:['Neem een verloopstekker CEE ↔ Schuko mee.','Zonder walstroom: zuinig met licht en ventilator, houd de accuspanning in de gaten.']},
+{id:'gas',cat:'basis',icon:'flame',title:'Gasfles wisselen',sum:'Veilig een lege fles vervangen.',
+ intro:'Het gas voor kookplaat, verwarming en boiler komt uit flessen in de gaskast.',
+ steps:['<b>Alle gastoestellen uit</b> en de kraan op de lege fles dicht.','<b>Drukregelaar losdraaien.</b> Meestal een <i>linkse</i> draad: losdraaien gaat met de klok mee.','<b>Lege fles eruit</b>, volle erin en vastzetten.','<b>Rubberen ring</b> controleren; vervangen als hij gescheurd is.','<b>Regelaar vastdraaien</b> (tegen de klok in), handvast.','<b>Kraan open</b> en lekzoeken met zeepsop: belletjes = lek.'],
+ warn:'Ruik je gas? Kraan dicht, ramen en deur open, geen schakelaars of vuur, naar buiten.',
+ tips:['Gas dicht bij het tanken en op de veerboot.','In het buitenland kun je Nederlandse flessen meestal niet omwisselen: vertrek met twee volle.']},
+{id:'water',cat:'basis',icon:'drop',title:'Vers water vullen',sum:'Tank vullen en de boiler in gebruik nemen.',
+ intro:'Je vult de schoonwatertank via een vulopening buiten. Daarna vult de boiler zich één keer.',
+ steps:['<b>Juiste opening:</b> de dop met het waterteken, niet de dieseldop.','<b>Vullen</b> met drinkwater.','<b>Waterpomp aan</b> op het paneel.','<b>FrostControl sluiten</b> (aftapklep van de boiler). Lukt dat niet, dan is het te koud: eerst verwarming aan.','<b>Warmwaterkraan open</b> tot er water zonder luchtbellen uit komt.','<b>Boiler aanzetten</b> op het Truma-paneel.'],
+ warn:'Nooit de boiler aanzetten als hij leeg is.'},
+{id:'vuilwater',cat:'basis',icon:'drain',title:'Grijs water legen',sum:'Afwas- en douchewater lozen.',
+ intro:'Grijs water loos je bij een servicepunt of een afvoerputje voor campers.',
+ steps:['<b>Rij boven het afvoerputje.</b>','<b>Open de aftapkraan</b> onder de camper.','<b>Laten leeglopen.</b>','<b>Kraan dicht</b> voor je wegrijdt.'],
+ tips:['Nooit grijs water in de natuur of berm lozen.','Leeg grijs water voor vertrek: dat scheelt gewicht.']},
+{id:'cassette',cat:'basis',icon:'toilet',title:'Cassette legen',sum:'Het toilet leeg, schoon en weer klaar.',
+ intro:'De toiletcassette maak je via een luik buiten leeg bij een stortpunt voor chemische toiletten. Leeg hem als de indicator oranje wordt, niet pas bij rood.',
+ steps:['<b>Toiletschuif dicht</b> (binnen in de pot).','<b>Luik buiten openen</b> met de sleutel.','<b>Cassette ontgrendelen</b> en eruit trekken; uittrekbare handgreep en wieltjes.','<b>Naar het stortpunt</b> voor chemische toiletten.','<b>Tuit omhoog draaien</b> en de dop eraf.','<b>Schuin houden en gieten.</b> Druk tijdens het gieten op de ontluchtingsknop: dan klokt en spat het niet.','<b>Naspoelen</b> met een paar liter water, twee keer.','<b>Toiletmiddel</b> erin volgens de verpakking, met ± 2 liter water.','<b>Dop erop, tuit terug</b>, cassette terug tot hij klikt, luik dicht.'],
+ warn:'Doe wegwerphandschoenen aan en was daarna je handen.',
+ tips:['Doe vóór gebruik een laagje water in de pot.','Gebruik snel oplossend toiletpapier.']},
+{id:'koelkast',cat:'basis',icon:'fridge',title:'Koelkast',sum:'Gas, 230 V of 12 V: wat wanneer.',
+ intro:'In de automatische stand kiest de koelkast zelf de beste energiebron.',
+ steps:['<b>Thuis al aanzetten</b>, een dag voor vertrek, dan pas vullen.','<b>Onderweg</b> koelt hij op 12 V van de rijdende motor.','<b>Op de camping</b> op 230 V, anders op gas.','<b>Deur vergrendelen</b> voor het rijden.']},
+{id:'verwarming',cat:'basis',icon:'thermo',title:'Verwarming & warm water',sum:'De Truma Combi en de FrostControl.',
+ intro:'De Truma Combi 6 E doet verwarming én warm water, op gas, 230 V of een mix.',
+ steps:['<b>Kies de energie</b>: gas, elektrisch of mix.','<b>Stel de temperatuur in</b> voor de ruimte.','<b>Warm water</b>: eco (± 40 °C) of hot (± 60 °C).','<b>Boiler eerst vullen</b> (zie Vers water vullen).'],
+ warn:'FrostControl: valt de verwarming of stroom uit en wordt het kouder dan ± 3 °C, dan loopt de boiler automatisch leeg. Bescherming, geen defect.'},
+{id:'luifel',cat:'basis',icon:'awning',title:'Luifel',sum:'Uitdraaien, vastzetten en op tijd binnen.',
+ intro:'De luifel geeft schaduw, maar is gevoelig voor wind.',
+ steps:['<b>Uitdraaien</b> met de slinger.','<b>Steunpoten</b> op de grond, vastzetten met haringen of banden.','<b>Bij regen</b> één kant lager zetten.','<b>Inrollen</b> en later droog laten worden.'],
+ warn:'Wind op komst of ga je weg? Luifel inrollen.'},
+{id:'hefbed',cat:'basis',icon:'bed',title:'Hefbed',sum:'Het bed boven de cabine.',
+ intro:'Het hefbed gaat overdag omhoog en \'s avonds omlaag.',
+ steps:['<b>Voorstoelen</b> in rijpositie draaien.','<b>Bed omlaag</b> trekken.','<b>Ladder</b> plaatsen.','<b>Overdag</b> omhoog duwen met beddengoed erin.','<b>Voor het rijden</b> vergrendelen.']},
+{id:'gewicht',cat:'basis',icon:'scale',title:'Gewicht & beladen',sum:'Binnen de 3.500 kg blijven.',
+ intro:'Met rijbewijs B mag de camper maximaal 3.500 kg wegen, alles inbegrepen.',
+ steps:['<b>Rij met weinig water</b> (± 20 L).','<b>Grijs water leeg</b> voor vertrek.','<b>Zwaar laag en tussen de assen.</b>','<b>Twijfel?</b> Weeg op een publieke weegbrug.'],
+ warn:'Te zwaar: boete, langere remweg en mogelijk problemen met de verzekering.'},
+{id:'storing',cat:'basis',icon:'tool',title:'Storing & noodgevallen',sum:'Gaslucht, stroomuitval, pech.',
+ intro:'Rustig blijven en deze volgorde aanhouden.',
+ steps:['<b>Gaslucht:</b> kraan dicht, ramen open, geen schakelaars, naar buiten.','<b>Geen stroom:</b> paneel, zekeringkast, campingpaal.','<b>Pech:</b> hesjes aan, driehoek plaatsen, iedereen achter de vangrail.','<b>Pechhulp NKC:</b> SOS International +31 33 467 70 88.','<b>Nood:</b> 112.']},
+{id:'zomercheck',cat:'zomer',icon:'bag',title:'Zomer-paklijst',sum:'Extra mee voor warm weer.',
+ intro:'Deze dingen maken een zomer in het zuiden prettiger. In een trip komen ze automatisch op je lijst.',
+ steps:['Thermomatten voor voorruit en zijramen','Horren gecontroleerd, anti-muggenmiddel','Waterslang met kraanadapterset','CEE-verloopstekker en 25 m kabel','Twee volle gasflessen','Zonnebrand en ruim drinkwater','Campingstoelen, tafel, grondzeil','Haringen en spanbanden voor de luifel','12 V- of USB-ventilator']},
+{id:'hitte',cat:'zomer',icon:'sun',title:'Koel blijven in de hitte',sum:'Camper, koelkast en mensen koel houden.',
+ intro:'Een camper warmt in de zon snel op. Met een paar gewoontes blijft het leefbaar.',
+ steps:['<b>Parkeer slim:</b> voorruit uit de zon, schaduw in de middag.','<b>Thermomatten</b> voor de cabine-ramen.','<b>Overdag dicht, \'s avonds open</b> met horren dicht.','<b>Dakluiken op ventilatie.</b>','<b>Koelkast</b> niet te vol, roosters buiten vrij; drank in een koelbox.','<b>Rij vroeg</b> en pauzeer in de warmste uren.'],
+ warn:'Laat nooit kinderen of huisdieren achter in een dichte camper in de zon.'},
+{id:'drinkwater',cat:'zomer',icon:'drop',title:'Drinkwater & hygiëne',sum:'Schone tank, veilig water.',
+ intro:'Water dat in de warmte stilstaat, wordt minder fris.',
+ steps:['<b>Voor het seizoen</b> tank en leidingen reinigen en naspoelen.','<b>Ververs het water</b> elke paar dagen.','<b>Alleen bij drinkwaterkranen</b> vullen.','<b>Drinkwater</b> in Zuid- en Oost-Europa liefst uit flessen; tankwater voor afwas en douche.']},
+{id:'bura',cat:'zomer',icon:'wind',title:'Wind aan de kust (bura)',sum:'Valwind langs de Adriatische kust.',
+ intro:'De bura komt plotseling op en is het gevaarlijkst op bruggen en open kuststukken.',
+ steps:['<b>Check het weer</b> en de verkeersinfo (bv. HAK) voor je langs de kust rijdt.','<b>Bruggen en kustwegen</b> gaan bij harde bura dicht voor campers.','<b>Luifel in</b> zodra de wind aantrekt.','<b>Parkeer met de neus in de wind.</b>'],
+ warn:'Rijd bij harde zijwind niet door. Vaak zakt de wind binnen een paar uur.'},
+{id:'winteruitrusting',cat:'winter',icon:'snow',title:'Winter-uitrusting',sum:'Extra inpakken voor de sneeuw.',
+ intro:'In een wintertrip komen deze dingen automatisch op je lijst.',
+ steps:['Winterbanden met sneeuwvloksymbool (3PMSF)','Sneeuwkettingen op jouw bandenmaat','Propaan, geen butaan (butaan stopt rond 0 °C)','Reservefles gas','Antivries in de ruitensproeier','Sneeuwschep, bezem, ijskrabber','Startkabels en werkhandschoenen','CO-melder (getest)']},
+{id:'kettingen',cat:'winter',icon:'chain',title:'Sneeuwkettingen leggen',sum:'Oefen het thuis één keer.',
+ intro:'Leg kettingen nooit voor het eerst in de sneeuw. Volg de handleiding van je set.',
+ steps:['<b>Vlakke, veilige plek</b>, hesje aan, alarmlichten aan.','<b>Pook in P, handrem erop.</b>','<b>Uitpakken en ontwarren</b> naast het wiel.','<b>Om de band leggen</b>, meestal de aangedreven voorwielen.','<b>Stukje rijden</b> en naspannen.','<b>Rustig rijden</b>, max. ± 40–50 km/u.']},
+{id:'vorst',cat:'winter',icon:'thermo',title:'Water bij vorst',sum:'Niets laten bevriezen.',
+ intro:'De schoonwatertank zit in het verwarmde deel. Zolang de verwarming aan staat, gaat het goed.',
+ steps:['<b>Verwarming altijd aan</b>, ook als je gaat skiën.','<b>Grijs water vaak legen.</b>','<b>Gaat de verwarming uit</b>: hele watersysteem aftappen.'],
+ warn:'Verwarming uit bij vorst = de FrostControl laat de boiler leeglopen.'},
+{id:'ventilatie',cat:'winter',icon:'wind',title:'Ventilatie & condens',sum:'Warm, droog en veilig binnen.',
+ intro:'In de winter is het verleidelijk om alles dicht te doen. Doe dat niet.',
+ steps:['<b>Ventilatieroosters nooit afplakken</b> (koolmonoxide).','<b>Dakluik op een kier</b> tegen condens.','<b>Natte ski-kleding</b> drogen bij de verwarming.','<b>Schoorsteen buiten sneeuwvrij.</b>']},
+{id:'ski',cat:'winter',icon:'ski',title:'Ski & board inladen',sum:'Veilig en binnen het gewicht.',
+ intro:'Vier sets ski\'s of boards met schoenen en winterkleding tikken flink aan.',
+ steps:['<b>Zwaar onderin</b> de garage en vastsnoeren.','<b>Schoenen en handschoenen</b> op een droogrek.','<b>Weinig water</b> aan boord (± 20 L).']},
+{id:'verzekering',cat:'reis',icon:'shield',title:'Verzekering in het buitenland',sum:'Waar de NKC-camperverzekering geldt.',
+ intro:'De NKC-camperverzekering (en de pechhulp) geldt in alle landen die op je Internationaal Motorrijtuigverzekeringsbewijs (IMV, vroeger groene kaart) staan en níet zijn doorgestreept, ook tijdens het rijden tussen die landen.',
+ steps:['<b>Kosovo (RKS):</b> zit niet in het groenekaartsysteem. Je moet aan de grens een grensverzekering kopen; casco en pechhulp van NKC gelden er niet.','<b>Rusland en Wit-Rusland:</b> sinds juni 2023 zijn Nederlandse verzekeringsbewijzen daar ongeldig.','<b>Iran:</b> sinds 2024 geen lid meer van het systeem.','<b>Buiten de EU</b> (o.a. Bosnië, Montenegro, Albanië, Servië, Noord-Macedonië, Turkije, Marokko): neem het IMV op papier mee en controleer dat het landcode-vakje niet is doorgestreept.','<b>Langer dan 6 maanden</b> in het buitenland gestald: dan vervalt de verzekering.'],
+ tips:['Twijfel je over een land, bel NKC: 033 467 70 80.','Bij schade buiten de EU: altijd politierapport laten maken.']},
+{id:'papieren',cat:'reis',icon:'doc',title:'Buiten de EU: papieren & grens',sum:'Wat je bij een grenscontrole laat zien.',
+ intro:'Rijd je naar een land buiten de EU, dan wordt er bij de grens gecontroleerd.',
+ steps:['<b>Paspoort</b> of ID-kaart van iedereen (VK: alleen paspoort).','<b>Rijbewijs</b> en <b>kentekenbewijs</b>.','<b>IMV / groene kaart</b> op papier, landcode niet doorgestreept.','<b>Hesjes</b> voor alle inzittenden, gevarendriehoek, verbanddoos.','<b>Schade bij binnenkomst</b> laten noteren.'],
+ tips:['In Montenegro en sommige buurlanden moet je je binnen 24 uur registreren; campings regelen dat meestal.']}
+];
+const CATS={basis:'Basis',zomer:'Zomer',winter:'Winter & skitrip',reis:'Buitenland'};
+const CC={basis:'',zomer:' z',winter:' w',reis:' m'};
+
+/* ---------- landen ---------- */
+/* todo: wat je vóór vertrek regelt; winter: winterregels */
+const L=[
+{c:'NL',n:'Nederland',eu:1,tol:'Geen tol, behalve Westerscheldetunnel en Kiltunnel.',alc:'0,5 ‰ (beginners 0,2 ‰)',licht:'Geen dagrijlichtplicht.',winter:'Geen winterbandenplicht.',slapen:'Wildkamperen verboden. Veel camperplaatsen.'},
+{c:'BE',n:'België',eu:1,tol:'Geen tol tot 3.500 kg, behalve de Liefkenshoektunnel.',alc:'0,5 ‰',licht:'Geen dagrijlichtplicht.',winter:'Geen winterbandenplicht.',slapen:'Wildkamperen verboden.',extra:['Milieuzones (LEZ) in Antwerpen, Gent en Brussel: buitenlandse voertuigen moeten zich vooraf (gratis) registreren.'],todo:['LEZ-registratie België als je door Antwerpen, Gent of Brussel rijdt']},
+{c:'LU',n:'Luxemburg',eu:1,tol:'Geen tol.',alc:'0,5 ‰',licht:'Geen dagrijlichtplicht.',winter:'Winterbanden verplicht bij winterse omstandigheden.',slapen:'Wildkamperen verboden.',extra:['Diesel is er meestal goedkoop: tank vol.']},
+{c:'DE',n:'Duitsland',eu:1,tol:'Geen tol tot 3.500 kg.',alc:'0,5 ‰',licht:'Geen dagrijlichtplicht.',winter:'Winterbanden (3PMSF) verplicht bij winterse omstandigheden. Sneeuw en ijs van het dak.',slapen:'Eén nacht op een parkeerplaats om uit te rusten wordt meestal gedoogd, zonder kampeergedrag (geen stoelen, luifel). Liever een Stellplatz.',extra:['Groene Umweltplakette nodig in milieuzones (Umweltzonen).','Vorm een vluchtstrook (Rettungsgasse) bij file.'],todo:['Groene Umweltplakette bestellen (Duitsland)']},
+{c:'FR',n:'Frankrijk',eu:1,tol:'Péage per km. Camper tot 3.500 kg en hoger dan 2 m: klasse 2.',alc:'0,5 ‰',licht:'Geen dagrijlichtplicht.',winter:'1 nov – 31 mrt in berggebieden winterbanden, of kettingen aan boord (Loi Montagne).',slapen:'Veel aires de camping-car. Wildkamperen per gemeente vaak verboden.',extra:['Crit\'Air-vignet nodig in een aantal steden met milieuzone (ZFE). Bestel alleen via de officiële site certificat-air.gouv.fr.','Hesje binnen handbereik, gevarendriehoek verplicht. Flitspaalwaarschuwers verboden.'],todo:['Crit\'Air-vignet bestellen (Frankrijk, officiële site)'],wtodo:['Kettingen of winterbanden voor Franse berggebieden']},
+{c:'CH',n:'Zwitserland',eu:0,tol:'Vignet (e-vignet) voor de snelweg, ook voor campers tot 3.500 kg. Gotthard en Grote St.-Bernard: tunneltol.',alc:'0,5 ‰',licht:'Altijd licht aan.',winter:'Geen wettelijke winterbandenplicht, maar wie zonder rijdt en vastloopt is aansprakelijk. Kettingen bij bord.',slapen:'Wildkamperen per kanton geregeld, meestal verboden.',extra:['Gevarendriehoek binnen handbereik.','Geen EU: let op douane voor grote hoeveelheden levensmiddelen of alcohol.'],todo:['E-vignet Zwitserland kopen']},
+{c:'AT',n:'Oostenrijk',eu:1,tol:'Vignet tot 3.500 kg. Extra tol (Streckenmaut) voor o.a. Brenner (A13), Tauern (A10), Karawanken (A11) en Arlberg.',alc:'0,5 ‰',licht:'Geen dagrijlichtplicht.',winter:'1 nov – 15 apr winterbanden bij winterse omstandigheden. Kettingen bij bord. Sneeuw van het dak.',slapen:'Wildkamperen verboden in o.a. Tirol en Wenen; elders vaak beperkt.',extra:['Een digitaal vignet dat je online koopt, is pas na 18 dagen geldig. Plakvignet bij een tankstation geldt direct.','Boven 3.500 kg: GO-Box in plaats van vignet.','Vluchtstrook (Rettungsgasse) bij file.'],todo:['Vignet Oostenrijk (digitaal ruim 18 dagen vooraf, of plakvignet onderweg)']},
+{c:'IT',n:'Italië',eu:1,tol:'Tol per km. Camper met hoogte boven de vooras > 1,30 m: klasse B.',alc:'0,5 ‰ (0 ‰ in de eerste 3 jaar)',licht:'Buiten de bebouwde kom altijd licht aan.',winter:'15 nov – 15 apr op aangegeven wegen winterbanden of kettingen aan boord.',slapen:'Aree di sosta voor campers. Wildkamperen vaak verboden per gemeente.',extra:['ZTL-zones in historische centra: niet inrijden, camera\'s beboeten automatisch.','Fietsendrager of lading die uitsteekt: rood-wit gestreept bord (50 × 50 cm) verplicht.'],todo:['Rood-wit waarschuwingsbord voor de fietsendrager (Italië/Spanje)']},
+{c:'ES',n:'Spanje',eu:1,tol:'Veel snelwegen zijn tolvrij geworden; op tolwegen betaalt een camper tot 3.500 kg met enkele achterwielen meestal het tarief voor lichte voertuigen.',alc:'0,5 ‰',licht:'Geen dagrijlichtplicht.',winter:'Kettingen of winterbanden waar aangegeven.',slapen:'In de camper overnachten op een gewone parkeerplek mag vaak; kampeergedrag (stoelen, luifel, steunen) niet.',extra:['Milieuzones (ZBE) in grote steden; in o.a. Barcelona moet je een buitenlands kenteken registreren.','Uitstekende fietsendrager: rood-wit bord V-20 verplicht.'],todo:['Rood-wit waarschuwingsbord voor de fietsendrager (Italië/Spanje)','ZBE-registratie als je Barcelona of Madrid in rijdt']},
+{c:'PT',n:'Portugal',eu:1,tol:'Deels elektronische tol zonder tolpoort. Regel EASYToll bij de grens of een tolkastje. Campers met hoogte vooras ≥ 1,10 m: klasse 2.',alc:'0,5 ‰',licht:'Geen dagrijlichtplicht.',winter:'Geen winterbandenplicht.',slapen:'Wildkamperen en overnachten buiten aangewezen plekken verboden; max. 48 uur op toegestane plekken.',todo:['Elektronische tol Portugal regelen (EASYToll of tolkastje)']},
+{c:'GB',n:'Verenigd Koninkrijk',eu:0,tol:'Weinig tol. Dartford Crossing: online betalen. Londen: ULEZ en congestieheffing.',alc:'0,8 ‰ (Schotland 0,5 ‰)',licht:'Geen dagrijlichtplicht.',winter:'Geen winterbandenplicht.',slapen:'Wildkamperen verboden (behalve delen van Schotland, niet voor campers).',extra:['Links rijden.','Alleen paspoort, geen ID-kaart.','Elke reiziger heeft een UK ETA nodig (elektronische reistoestemming).'],todo:['UK ETA aanvragen voor elke reiziger','Paspoorten (ID-kaart geldt niet in het VK)']},
+{c:'DK',n:'Denemarken',eu:1,tol:'Geen tol, behalve Storebæltbrug en Øresundbrug (voertuig langer dan 6 m betaalt meer).',alc:'0,5 ‰',licht:'Altijd licht aan.',winter:'Geen winterbandenplicht.',slapen:'Wildkamperen verboden.'},
+{c:'SE',n:'Zweden',eu:1,tol:'Øresundbrug, enkele bruggen en congestieheffing in Stockholm en Göteborg (factuur via EPASS24).',alc:'0,2 ‰',licht:'Altijd licht aan.',winter:'1 dec – 31 mrt winterbanden bij winterse omstandigheden.',slapen:'Het allemansrecht geldt niet voor kamperen met de camper: overnachten waar parkeren is toegestaan.',todo:['Registreren bij EPASS24 voor tol in Zweden/Noorwegen']},
+{c:'NO',n:'Noorwegen',eu:0,tol:'Overal elektronische tol (AutoPASS) en veel veerboten. Registreer je kenteken bij EPASS24.',alc:'0,2 ‰',licht:'Altijd licht aan.',winter:'Winterbanden bij winterse omstandigheden; kettingen mee in de bergen.',slapen:'Het allemansrecht geldt niet voor campers op onverharde grond; overnachten waar het mag.',extra:['Geen EU: douane-limieten voor alcohol en levensmiddelen.'],todo:['Registreren bij EPASS24 voor tol in Zweden/Noorwegen']},
+{c:'PL',n:'Polen',eu:1,tol:'Tol op delen van de A1, A2 en A4. Staatsdelen via de e-TOLL-app, private delen bij de tolpoort.',alc:'0,2 ‰',licht:'Altijd licht aan.',winter:'Geen winterbandenplicht.',slapen:'Wildkamperen verboden, behalve op aangewezen plekken.',extra:['Brandblusser aan boord aanbevolen.']},
+{c:'CZ',n:'Tsjechië',eu:1,tol:'E-vignet voor de snelweg (tot 3.500 kg).',alc:'0,0 ‰',licht:'Altijd licht aan.',winter:'1 nov – 31 mrt winterbanden bij winterse omstandigheden.',slapen:'Wildkamperen verboden.',todo:['E-vignet Tsjechië kopen']},
+{c:'SK',n:'Slowakije',eu:1,tol:'E-vignet voor de snelweg (tot 3.500 kg).',alc:'0,0 ‰',licht:'Altijd licht aan.',winter:'Winterbanden bij winterse omstandigheden.',slapen:'Wildkamperen verboden.',todo:['E-vignet Slowakije kopen']},
+{c:'HU',n:'Hongarije',eu:1,tol:'E-vignet (e-matrica), categorie D1 voor een camper tot 3.500 kg.',alc:'0,0 ‰',licht:'Buiten de bebouwde kom altijd licht aan.',winter:'Geen winterbandenplicht.',slapen:'Wildkamperen verboden.',todo:['E-vignet Hongarije (D1) kopen']},
+{c:'SI',n:'Slovenië',eu:1,tol:'E-vignet. Camper tot 3.500 kg: klasse 2A, ongeacht de hoogte.',alc:'0,5 ‰',licht:'Altijd licht aan.',winter:'15 nov – 15 mrt winterbanden, of zomerbanden met kettingen aan boord.',slapen:'Wildkamperen verboden, hoge boetes.',todo:['E-vignet Slovenië klasse 2A kopen']},
+{c:'HR',n:'Kroatië',eu:1,tol:'Tol per km bij de tolpoort. Camper hoger dan 1,90 m: categorie II. Euro, contant of kaart.',alc:'0,5 ‰ (0 ‰ onder 25 jaar)',licht:'Laatste zondag okt – laatste zondag mrt licht aan.',winter:'Winteruitrusting in het binnenland bij winterse omstandigheden.',slapen:'Wildkamperen verboden.',extra:['Let op de bura langs de kust: bruggen gaan dicht voor campers.']},
+{c:'BA',n:'Bosnië en Herzegovina',eu:0,tol:'Tol op de A1-snelweg bij de tolpoort.',alc:'0,3 ‰',licht:'Altijd licht aan.',winter:'15 nov – 15 apr winteruitrusting verplicht.',slapen:'Campings en aangewezen plekken.',extra:['De kustweg bij Neum is ± 10 km Bosnisch: grenscontrole aan beide kanten.']},
+{c:'ME',n:'Montenegro',eu:0,tol:'Snelweg Smokovac–Mateševo en de Sozina-tunnel (camper ± € 5).',alc:'0,3 ‰',licht:'Altijd licht aan.',winter:'15 nov – 31 mrt winterbanden of kettingen bij winterse omstandigheden.',slapen:'Wildkamperen verboden; registratie binnen 24 uur (camping regelt dat).',extra:['Baai van Kotor: veerpont Kamenari–Lepetane scheelt een lange, smalle rit.','Euro als munt; neem contant geld mee.','Bij schade een politierapport, anders kun je het land niet uit.']},
+{c:'AL',n:'Albanië',eu:0,tol:'Weinig tol (o.a. Kalimash-tunnel richting Kosovo).',alc:'Zeer lage limiet: drink niet als je rijdt.',licht:'Altijd licht aan.',winter:'Kettingen in de bergen.',slapen:'Vrij overnachten wordt vaak gedoogd; vraag toestemming op privéterrein.',extra:['Wegen in het binnenland wisselend van kwaliteit; niet in het donker rijden.']},
+{c:'XK',n:'Kosovo',eu:0,ins:'bad',tol:'Geen snelwegtol van betekenis.',alc:'0,5 ‰',licht:'Altijd licht aan.',winter:'Winteruitrusting in de bergen.',slapen:'Campings beperkt.',extra:['Je groene kaart en NKC-verzekering gelden hier niet. Koop aan de grens een verplichte grensverzekering.','Servië erkent de grens niet: ben je Kosovo vanuit Albanië, Montenegro of Noord-Macedonië binnengekomen, rijd dan niet door naar Servië.'],todo:['Kosovo: geld klaar voor de verplichte grensverzekering (NKC geldt daar niet)']},
+{c:'RS',n:'Servië',eu:0,tol:'Tol op snelwegen bij de tolpoort.',alc:'0,2 ‰',licht:'Altijd licht aan.',winter:'1 nov – 1 apr winteruitrusting bij winterse omstandigheden.',slapen:'Campings en aangewezen plekken.'},
+{c:'MK',n:'Noord-Macedonië',eu:0,tol:'Tol op snelwegen bij de tolpoort (contant handig).',alc:'0,5 ‰',licht:'Altijd licht aan.',winter:'15 nov – 15 mrt winteruitrusting.',slapen:'Campings en aangewezen plekken.'},
+{c:'GR',n:'Griekenland',eu:1,tol:'Tol bij tolpoorten; een camper betaalt meestal klasse 2.',alc:'0,5 ‰ (beginners 0,2 ‰)',licht:'Geen dagrijlichtplicht.',winter:'Kettingen in de bergen bij bord.',slapen:'Wildkamperen officieel verboden.',extra:['Veerboten vanuit Italië: reserveer een plek voor campers ruim vooraf.']}
+];
+L.forEach(l=>{if(!l.eu&&l.c!=='GB'&&l.c!=='CH'&&l.c!=='NO'){l.todo=(l.todo||[]).concat(['Groene kaart / IMV op papier: '+l.c+' niet doorgestreept'])}});
+const LBY=Object.fromEntries(L.map(l=>[l.c,l]));
+
+/* ---------- lijsten voor trips ---------- */
+const PRE_BASE=['IMV (verzekeringsbewijs) printen en controleren','Pechhulp-nummer NKC in telefoon: +31 33 467 70 88','Reisverzekering en EHIC-pas','APK en onderhoud in orde','Twee volle gasflessen','Route en eerste overnachting gepland'];
+const PACK_BASE=['Kentekenbewijs, rijbewijs, paspoorten of ID','Hesjes voor iedereen, gevarendriehoek, verbanddoos','CEE-kabel en verloopstekker','Waterslang en kraanadapters','Oprijblokken','Toiletmiddel en snel oplossend papier','Wegwerphandschoenen','Zaklamp en powerbank','Brandblusser en CO-melder'];
+const PACK={zomer:['Thermomatten voor de ramen','Horren gecontroleerd, anti-muggenmiddel','Zonnebrand, petten, drinkwater','Campingstoelen, tafel, grondzeil','Haringen en spanbanden voor de luifel','12 V- of USB-ventilator'],
+ winter:['Winterbanden (3PMSF) gecontroleerd','Sneeuwkettingen, thuis geoefend','Propaangas (geen butaan) + reservefles','Antivries in de ruitensproeier','Sneeuwschep, bezem, ijskrabber','Startkabels en werkhandschoenen','Droogrek voor natte kleding'],
+ tussen:['Regenkleding en laarzen','Extra dekens','Thermomatten (koude nachten)','Sneeuwkettingen als je over hoge passen rijdt']};
+const PACK_SKI=['Ski\'s / boards vastgezet in de garage','Skischoenen, helmen, brillen','Skipassen geregeld','Weinig water aan boord (± 20 L): let op gewicht'];
+const SEASON={zomer:'Zomer',winter:'Winter',tussen:'Voor- of najaar'};
+const slug=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+
+function buildLists(trip){
+  const cs=(trip.countries||[]).map(c=>LBY[c]).filter(Boolean);
+  const seen=new Set(); const pre=[];
+  const add=(arr,txt)=>{const k='p-'+slug(txt); if(!seen.has(k)){seen.add(k);arr.push({k,txt})}};
+  PRE_BASE.forEach(t=>add(pre,t));
+  cs.forEach(l=>{(l.todo||[]).forEach(t=>add(pre,t)); if(trip.season==='winter')(l.wtodo||[]).forEach(t=>add(pre,t));});
+  if(cs.some(l=>!l.eu)) add(pre,'Paspoorten (geldig) voor landen buiten de EU');
+  const pack=[]; const ps=new Set();
+  const addp=t=>{const k='k-'+slug(t); if(!ps.has(k)){ps.add(k);pack.push({k,txt:t})}};
+  PACK_BASE.forEach(addp); (PACK[trip.season]||[]).forEach(addp); if(trip.ski&&trip.season==='winter') PACK_SKI.forEach(addp);
+  const own=(trip.custom||[]).map(c=>({k:c.k,txt:c.txt,own:1}));
+  const warns=[];
+  if(cs.some(l=>l.c==='XK')) warns.push(['bad','Kosovo zit niet in het groenekaartsysteem: je NKC-verzekering (WA, casco en pechhulp) geldt daar niet. Koop aan de grens een grensverzekering.']);
+  const nonEu=cs.filter(l=>!l.eu&&!['GB','CH','NO','XK'].includes(l.c));
+  if(nonEu.length) warns.push(['warn','Buiten de EU: neem het IMV (groene kaart) op papier mee en controleer dat '+nonEu.map(l=>l.c).join(', ')+' niet zijn doorgestreept.']);
+  if(cs.some(l=>l.c==='AT')) warns.push(['warn','Oostenrijk: een online gekocht digitaal vignet is pas na 18 dagen geldig.']);
+  return {cs,pre,pack,own,warns};
+}
+
+/* ---------- opslag: Firebase (gedeeld) of lokaal ---------- */
+const S={mode:'loading',fdb:null,auth:null,me:null,uid:null,canWrite:true,trips:[],tripsErr:null,checks:{},unsubChecks:null,checksFor:null,unsubTrips:null};
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const listeners=new Set(); const notify=()=>listeners.forEach(f=>f());
+function newId(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function myName(){return S.me?(S.me.displayName||S.me.email||'jij'):null}
+
+function initStore(){
+  const cfg=window.FIREBASE_CONFIG;
+  if(cfg&&cfg.apiKey&&!/^VUL/.test(cfg.apiKey)&&window.firebase){
+    firebase.initializeApp(cfg); S.fdb=firebase.firestore(); S.auth=firebase.auth();
+    S.auth.getRedirectResult().catch(()=>{});
+    S.auth.onAuthStateChanged(u=>{
+      if(S.unsubTrips){S.unsubTrips();S.unsubTrips=null}
+      if(S.unsubChecks){S.unsubChecks();S.unsubChecks=null;S.checksFor=null}
+      S.me=u||null; S.uid=u?u.uid:null; S.tripsErr=null;
+      if(!u){S.mode='auth';S.trips=[];notify();return}
+      S.mode='db';
+      S.unsubTrips=S.fdb.collection('trips').onSnapshot(snap=>{S.trips=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.created||0)-(a.created||0));S.tripsErr=null;notify()},err=>{S.tripsErr=err.code||'error';S.trips=[];notify()});
+      notify();
+    });
+  }else{
+    S.mode='local'; S.trips=LS.get('cw-trips',[]);
+  }
+  notify();
+}
+async function login(){
+  const p=new firebase.auth.GoogleAuthProvider();
+  try{await S.auth.signInWithPopup(p)}catch(e){ if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')) await S.auth.signInWithRedirect(p); else alertBox('Inloggen lukte niet ('+(e.code||'fout')+').') }
+}
+async function saveTrip(t){
+  if(S.mode==='db'){ const {id,...body}=t; await S.fdb.collection('trips').doc(id).set(body); }
+  else{ const i=S.trips.findIndex(x=>x.id===t.id); if(i>=0)S.trips[i]=t; else S.trips.unshift(t); LS.set('cw-trips',S.trips); notify(); }
+}
+async function deleteTrip(id){
+  if(S.mode==='db'){
+    const ref=S.fdb.collection('trips').doc(id);
+    try{const cs=await ref.collection('checks').get(); for(const d of cs.docs){await d.ref.delete()}}catch(e){}
+    await ref.delete();
+  }else{ S.trips=S.trips.filter(x=>x.id!==id); LS.set('cw-trips',S.trips); try{localStorage.removeItem('cw-ck-'+id)}catch(e){} notify(); }
+}
+function watchChecks(id){
+  if(S.checksFor===id) return; if(S.unsubChecks){S.unsubChecks();S.unsubChecks=null}
+  S.checksFor=id; S.checks={};
+  if(S.mode==='db'){ S.unsubChecks=S.fdb.collection('trips').doc(id).collection('checks').onSnapshot(snap=>{const o={};snap.docs.forEach(d=>o[d.id]=d.data());S.checks=o;notify()},()=>{}); }
+  else{ S.checks=LS.get('cw-ck-'+id,{}); notify(); }
+}
+async function setCheck(id,k,done){
+  const v={done,by:myName(),at:Date.now()};
+  if(S.mode==='db'){ await S.fdb.collection('trips').doc(id).collection('checks').doc(k).set(v); }
+  else{ S.checks[k]=v; LS.set('cw-ck-'+id,S.checks); notify(); }
+}
+
+/* ---------- navigatie ---------- */
+const V={trips:document.getElementById('v-trips'),gids:document.getElementById('v-gids'),landen:document.getElementById('v-landen'),detail:document.getElementById('v-detail')};
+let route={tab:'trips',detail:null};
+function setHash(h){try{history.replaceState(null,'',h?'#'+h:location.pathname+location.search)}catch(e){}}
+function go(tab,detail){
+  route={tab,detail:detail||null};
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+  Object.entries(V).forEach(([k,el])=>el.hidden=true);
+  if(detail){V.detail.hidden=false; renderDetail(); setHash(detail);}
+  else{V[tab].hidden=false; if(tab==='trips')renderTrips(); if(tab==='landen')renderLanden(); if(tab==='gids')renderGids(); setHash(tab==='trips'?'':tab); if(S.unsubChecks){S.unsubChecks();S.unsubChecks=null;S.checksFor=null}}
+  window.scrollTo(0,0);
+  const h=V.detail.querySelector('h2'); if(detail&&h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true})}
+}
+function fromHash(){
+  const h=location.hash.slice(1);
+  if(!h) return go('trips');
+  if(h==='gids'||h==='landen'||h==='trips') return go(h);
+  if(h.startsWith('land-')) return go('landen',h);
+  if(h.startsWith('trip-')||h==='nieuw'||h.startsWith('edit-')) return go('trips',h);
+  if(T.find(t=>t.id===h)) return go('gids',h);
+  go('trips');
+}
+
+/* ---------- handleiding ---------- */
+let filter='alles'; const q=document.getElementById('q');
+function topicCard(t){return `<button class="card${CC[t.cat]}" data-go="${t.id}"><span class="ic">${svg(t.icon)}</span><span style="min-width:0"><span class="ct">${t.title}</span><span class="cs">${t.sum}</span></span></button>`}
+function renderGids(){
+  const term=q.value.trim().toLowerCase();
+  const txt=t=>(t.title+' '+t.sum+' '+t.intro+' '+(t.steps||[]).join(' ')+' '+(t.tips||[]).join(' ')+' '+(t.warn||'')).replace(/<[^>]+>/g,'').toLowerCase();
+  const items=T.filter(t=>(filter==='alles'||t.cat===filter)&&(!term||txt(t).includes(term)));
+  const html=Object.entries(CATS).map(([c,l])=>{const xs=items.filter(t=>t.cat===c);return xs.length?`<h2 class="group-h">${l}</h2><div class="grid">${xs.map(topicCard).join('')}</div>`:''}).join('');
+  document.getElementById('groups').innerHTML=html||`<p class="empty">Niets gevonden voor “${esc(term)}”.</p>`;
+}
+function topicHTML(t){
+  const i=T.indexOf(t),prev=T[i-1],next=T[i+1];
+  const st=t.cat==='winter'?'background:var(--ice-soft);color:var(--ice)':t.cat==='zomer'?'background:var(--sun-soft);color:var(--sun)':t.cat==='reis'?'background:var(--sea-soft);color:var(--sea)':'';
+  let h=`<button class="back" data-tab-go="gids">← Handleiding</button><div class="d-head"><span class="ic" style="${st}">${svg(t.icon,28)}</span><h2>${t.title}</h2></div><p class="intro">${t.intro}</p>`;
+  if(t.warn) h+=`<div class="warn" role="note">${svg('alert')}<p>${t.warn}</p></div>`;
+  const list=t.id==='zomercheck'||t.id==='winteruitrusting';
+  if(t.steps) h+= list?`<h3 class="sec-h">Lijst</h3><ul class="tips">${t.steps.map(s=>`<li>${s}</li>`).join('')}</ul>`:`<h3 class="sec-h">Stap voor stap</h3><ol class="steps">${t.steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol>`;
+  if(t.tips) h+=`<h3 class="sec-h">Tips</h3><ul class="tips">${t.tips.map(s=>`<li>${s}</li>`).join('')}</ul>`;
+  h+=`<div class="next">${prev?`<button class="btn" data-go="${prev.id}">← ${prev.title}</button>`:''}${next?`<button class="btn" data-go="${next.id}">${next.title} →</button>`:''}</div>`;
+  return h;
+}
+
+/* ---------- landen ---------- */
+function countryCard(l){
+  const pills=[];
+  if(!l.eu) pills.push('<span class="pill warn">Niet-EU</span>');
+  if(l.ins==='bad') pills.push('<span class="pill bad">Geen NKC-dekking</span>');
+  if(/vignet/i.test(l.tol)) pills.push('<span class="pill">Vignet</span>');
+  return `<button class="card" data-go="land-${l.c.toLowerCase()}"><span class="cc">${l.c}</span><span style="min-width:0"><span class="ct">${l.n}</span><span class="cs">${esc(l.tol.split('.')[0])}.</span>${pills.join('')}</span></button>`;
+}
+function renderLanden(){
+  V.landen.innerHTML=`<p class="intro" style="margin-top:18px">De belangrijkste regels per land voor een camper tot 3.500 kg. In een trip worden de dingen die je vooraf moet regelen automatisch op je lijst gezet.</p><div class="grid">${L.map(countryCard).join('')}</div>`;
+}
+function countryHTML(l,back){
+  let h=`<button class="back" ${back?`data-go="${back}"`:'data-tab-go="landen"'}>← ${back?'Terug naar trip':'Alle landen'}</button><div class="d-head"><span class="cc big">${l.c}</span><h2>${l.n}</h2></div>`;
+  if(l.ins==='bad') h+=`<div class="bad" role="note">${svg('shield')}<p><b>Geen dekking via je groene kaart / NKC.</b> Koop aan de grens een grensverzekering.</p></div>`;
+  else if(!l.eu&&!['GB','CH','NO'].includes(l.c)) h+=`<div class="warn" role="note">${svg('shield')}<p>Buiten de EU: neem het IMV (groene kaart) op papier mee en controleer dat <b>${l.c}</b> niet is doorgestreept.</p></div>`;
+  h+=`<dl class="rules"><dt>Tol &amp; vignet</dt><dd>${esc(l.tol)}</dd><dt>Alcohol</dt><dd>${esc(l.alc)}</dd><dt>Verlichting</dt><dd>${esc(l.licht)}</dd><dt>Winter</dt><dd>${esc(l.winter)}</dd><dt>Overnachten</dt><dd>${esc(l.slapen)}</dd></dl>`;
+  if(l.extra) h+=`<h3 class="sec-h">Goed om te weten</h3><ul class="tips">${l.extra.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`;
+  if(l.todo) h+=`<h3 class="sec-h">Vooraf regelen</h3><ul class="tips">${l.todo.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`;
+  return h;
+}
+
+/* ---------- trips ---------- */
+function storeNote(){
+  if(S.mode==='loading') return `<p class="status">Laden…</p>`;
+  if(S.mode==='auth') return `<div class="info">${svg('info')}<p>Log in met je Google-account om jullie gedeelde trips te zien en af te vinken.</p></div><p><button class="btn primary" data-login="1">Inloggen met Google</button></p>`;
+  if(S.mode==='local') return `<div class="info">${svg('info')}<p>Firebase is nog niet ingesteld: je trips worden alleen op dit apparaat bewaard. Zie de README om delen aan te zetten.</p></div>`;
+  return '';
+}
+function renderTrips(){
+  const ts=S.trips;
+  let h=`<div class="row" style="justify-content:space-between;margin:18px 0 6px"><h2 class="group-h" style="margin:0;flex:1">Mijn trips</h2>${(S.mode==='db'||S.mode==='local')?`<button class="btn primary" data-go="nieuw">+ Nieuwe trip</button>`:''}</div>${storeNote()}`;
+  if(S.tripsErr) h+= S.tripsErr==='permission-denied'?`<div class="bad">${svg('shield')}<p>Dit Google-account (${esc(S.me?.email||'')}) heeft geen toegang. Vraag de eigenaar om je e-mailadres toe te voegen aan de Firestore-regels.</p></div>`:`<div class="warn">${svg('alert')}<p>De trips konden niet geladen worden. Herlaad de pagina.</p></div>`;
+  if((S.mode==='db'||S.mode==='local')&&!S.tripsErr&&!ts.length) h+=`<div class="empty"><p style="margin:0 0 10px">Nog geen trips. Maak er een: kies de landen en het seizoen, en je krijgt meteen een lijst met wat je moet regelen en inpakken, plus de regels per land.</p></div>`;
+  if(ts.length) h+=`<div class="grid">${ts.map(t=>`<button class="card trip-card" data-go="trip-${t.id}"><span class="ic" style="${t.season==='winter'?'background:var(--ice-soft);color:var(--ice)':t.season==='zomer'?'background:var(--sun-soft);color:var(--sun)':''}">${svg(t.season==='winter'?'snow':t.season==='zomer'?'sun':'map')}</span><span style="min-width:0"><span class="ct">${esc(t.name)}</span><span class="cs">${esc(SEASON[t.season]||'')}${t.ski&&t.season==='winter'?' · ski':''} · ${(t.countries||[]).join(' → ')}</span></span></button>`).join('')}</div>`;
+  if(S.mode==='db') h+=`<p class="status" style="margin-top:22px">Ingelogd als ${esc(S.me?.email||'')} · <button class="back" style="display:inline;padding:0;min-height:0" data-logout="1">Uitloggen</button></p>`;
+  V.trips.innerHTML=h;
+}
+let form=null;
+function formHTML(t){
+  form=form||{id:t?.id||newId(),name:t?.name||'',season:t?.season||'zomer',ski:!!t?.ski,countries:[...(t?.countries||['NL'])],custom:t?.custom||[],created:t?.created||Date.now(),by:t?.by||S.uid||null};
+  const f=form;
+  return `<button class="back" data-go="${t?'trip-'+t.id:''}" ${t?'':'data-tab-go="trips"'}>← ${t?'Terug':'Mijn trips'}</button>
+  <div class="d-head"><span class="ic">${svg('map',28)}</span><h2>${t?'Trip bewerken':'Nieuwe trip'}</h2></div>
+  <form class="trip" id="tripform">
+    <div class="field"><label class="l" for="f-name">Naam</label><input type="text" id="f-name" value="${esc(f.name)}" placeholder="bv. Montenegro zomer 2027" required maxlength="80"></div>
+    <div class="field"><span class="l" id="l-season">Seizoen</span><div class="seg" role="group" aria-labelledby="l-season">${Object.entries(SEASON).map(([k,v])=>`<button type="button" class="chip" data-season="${k}" aria-pressed="${f.season===k}">${v}</button>`).join('')}</div>
+      ${f.season==='winter'?`<label class="pick" style="margin-top:8px;max-width:280px" for="f-ski"><input type="checkbox" id="f-ski" ${f.ski?'checked':''}> Skitrip</label>`:''}</div>
+    <div class="field"><span class="l">Landen, in de volgorde van je route</span>
+      <div class="route" aria-live="polite">${f.countries.length?f.countries.map((c,i)=>(i?'<span class="arr">→</span>':'')+`<span class="stop">${c}</span>`).join(''):'<span class="status">Kies hieronder de landen.</span>'}</div>
+      <div class="picks" style="margin-top:10px">${L.map(l=>{const i=f.countries.indexOf(l.c);return `<label class="pick${i>=0?' on':''}" for="pk-${l.c}"><input type="checkbox" id="pk-${l.c}" data-c="${l.c}" ${i>=0?'checked':''}><span>${l.n}</span>${i>=0?`<span class="n">${i+1}</span>`:''}</label>`}).join('')}</div></div>
+    <div class="row"><button type="submit" class="btn primary">${t?'Opslaan':'Trip maken'}</button><span class="status" id="f-status"></span></div>
+  </form>`;
+}
+function tripHTML(t){
+  const {cs,pre,pack,own,warns}=buildLists(t);
+  const ck=S.checks; const ro=!(S.mode==='db'||S.mode==='local');
+  const sec=(title,items,canDel)=>{const done=items.filter(x=>ck[x.k]?.done).length;
+    return `<h3 class="sec-h">${title}<small>${done} van ${items.length}</small></h3>`+items.map(x=>{const c=ck[x.k]; const d=!!c?.done;
+      return `<label class="check${d?' done':''}" for="c-${x.k}"><input type="checkbox" id="c-${x.k}" data-ck="${x.k}" ${d?'checked':''} ${ro?'disabled':''}><span><span class="txt">${esc(x.txt)}</span>${d&&c.by?`<span class="who" data-who="${esc(c.by)}"></span>`:''}</span>${canDel&&x.own&&!ro?`<button type="button" class="del" data-delown="${x.k}" aria-label="Verwijder ${esc(x.txt)}">Verwijder</button>`:''}</label>`}).join('');};
+  let h=`<button class="back" data-tab-go="trips">← Mijn trips</button><div class="d-head"><span class="ic">${svg(t.season==='winter'?'snow':t.season==='zomer'?'sun':'map',28)}</span><h2>${esc(t.name)}</h2></div>
+  <p class="intro" style="margin-bottom:8px">${esc(SEASON[t.season]||'')}${t.ski&&t.season==='winter'?' · skitrip':''}</p>
+  <div class="route">${cs.map((l,i)=>(i?'<span class="arr">→</span>':'')+`<button class="stop" style="border:0;font:inherit;cursor:pointer" data-go="land-${l.c.toLowerCase()}" data-from="trip-${t.id}">${l.c}</button>`).join('')}</div>`;
+  h+=storeNote();
+  warns.forEach(([k,m])=>h+=`<div class="${k}" role="note">${svg(k==='bad'?'shield':'alert')}<p>${esc(m)}</p></div>`);
+  h+=sec('Vooraf regelen',pre);
+  h+=sec('Inpakken',pack);
+  h+=sec('Eigen punten',own,true)+(ro?'':`<form class="addrow" id="addown"><label for="ownin" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Eigen punt</label><input id="ownin" placeholder="Eigen punt toevoegen…" maxlength="120"><button class="btn" type="submit">Toevoegen</button></form>`);
+  h+=`<h3 class="sec-h">Regels onderweg</h3><div class="grid">${cs.map(l=>`<button class="card" data-go="land-${l.c.toLowerCase()}" data-from="trip-${t.id}"><span class="cc">${l.c}</span><span style="min-width:0"><span class="ct">${l.n}</span><span class="cs">Alcohol ${esc(l.alc)} · ${esc(l.licht)}</span></span></button>`).join('')}</div>`;
+  h+=`<h3 class="sec-h">Handig voor deze trip</h3><div class="grid">${['vertrek','cassette','gas',t.season==='winter'?'vorst':'hitte',t.season==='winter'?'kettingen':'drinkwater','verzekering'].map(id=>topicCard(T.find(x=>x.id===id))).join('')}</div>`;
+  if(!ro) h+=`<div class="row" style="margin-top:28px"><button class="btn" data-go="edit-${t.id}">Trip bewerken</button><span id="delwrap"><button class="btn danger" data-del="1">Trip verwijderen</button></span></div>`;
+  return h;
+}
+function fillWho(){
+  V.detail.querySelectorAll('[data-who]').forEach(e=>{const b=e.dataset.who; e.textContent='afgevinkt door '+(b===myName()?'jou':b)});
+}
+
+/* ---------- detail renderen ---------- */
+let backFrom=null;
+function renderDetail(){
+  const d=route.detail; let h='';
+  if(d==='nieuw'){h=formHTML(null)}
+  else if(d.startsWith('edit-')){const t=S.trips.find(x=>'edit-'+x.id===d); h=t?formHTML(t):'<p class="empty">Trip niet gevonden.</p>'}
+  else if(d.startsWith('trip-')){const t=S.trips.find(x=>'trip-'+x.id===d); if(t){watchChecks(t.id); h=tripHTML(t)} else h=S.mode==='loading'?'<p class="status" style="margin-top:20px">Laden…</p>':'<p class="empty">Deze trip bestaat niet (meer). <button class="btn" data-tab-go="trips">Naar mijn trips</button></p>'}
+  else if(d.startsWith('land-')){const l=LBY[d.slice(5).toUpperCase()]; h=l?countryHTML(l,backFrom):''}
+  else {const t=T.find(x=>x.id===d); h=t?topicHTML(t):''}
+  V.detail.innerHTML=h; fillWho();
+}
+listeners.add(()=>{ if(route.detail&&(route.detail.startsWith('trip-')||route.detail.startsWith('edit-'))){ if(route.detail.startsWith('edit-')&&form) return; const y=window.scrollY; const a=document.activeElement?.id; renderDetail(); window.scrollTo(0,y); if(a){const el=document.getElementById(a); el&&el.focus({preventScroll:true})} } else if(!route.detail&&route.tab==='trips') renderTrips(); });
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  if(e.target.closest('[data-login]')){login();return}
+  if(e.target.closest('[data-logout]')){S.auth.signOut();return}
+  const tg=e.target.closest('[data-tab-go]'); if(tg){form=null;backFrom=null;go(tg.dataset.tabGo);return}
+  const tb=e.target.closest('nav.tabs button'); if(tb){form=null;backFrom=null;go(tb.dataset.tab);return}
+  const g=e.target.closest('[data-go]'); if(g){const id=g.dataset.go; if(!id){go('trips');return}
+    backFrom=id.startsWith('land-')?(g.dataset.from||null):null; if(id==='nieuw'||id.startsWith('edit-'))form=null;
+    const tab=id.startsWith('land-')?(backFrom?'trips':'landen'):(id.startsWith('trip-')||id==='nieuw'||id.startsWith('edit-'))?'trips':'gids'; go(tab,id); return}
+  const ch=e.target.closest('.chip[data-f]'); if(ch){filter=ch.dataset.f;document.querySelectorAll('.chip[data-f]').forEach(x=>x.setAttribute('aria-pressed',x===ch));renderGids();return}
+  const se=e.target.closest('[data-season]'); if(se&&form){form.name=document.getElementById('f-name').value;form.season=se.dataset.season;renderDetail();return}
+  const dl=e.target.closest('[data-del]'); if(dl){const w=document.getElementById('delwrap'); w.innerHTML=`<span class="row"><span>Zeker weten? Alle vinkjes gaan ook weg.</span><button class="btn danger" data-delyes="1">Ja, verwijderen</button><button class="btn" data-delno="1">Annuleren</button></span>`;return}
+  if(e.target.closest('[data-delno]')){renderDetail();return}
+  if(e.target.closest('[data-delyes]')){const id=route.detail.slice(5); try{await deleteTrip(id);go('trips')}catch(err){alertBox('Verwijderen lukte niet. Probeer het opnieuw.')}return}
+  const od=e.target.closest('[data-delown]'); if(od){e.preventDefault();const t=curTrip(); if(!t)return; const custom=(t.custom||[]).filter(c=>c.k!==od.dataset.delown); try{await saveTrip({...t,custom})}catch(err){alertBox('Opslaan lukte niet.')}return}
+});
+document.addEventListener('change',async e=>{
+  const c=e.target.closest('input[data-c]'); if(c&&form){form.name=document.getElementById('f-name').value; const code=c.dataset.c; if(c.checked){if(!form.countries.includes(code))form.countries.push(code)}else form.countries=form.countries.filter(x=>x!==code); const y=window.scrollY; renderDetail(); window.scrollTo(0,y); document.getElementById('pk-'+code)?.focus({preventScroll:true}); return}
+  if(e.target.id==='f-ski'&&form){form.ski=e.target.checked;return}
+  const k=e.target.closest('input[data-ck]'); if(k){const t=curTrip(); if(!t)return; try{await setCheck(t.id,k.dataset.ck,k.checked)}catch(err){k.checked=!k.checked;alertBox('Afvinken lukte niet. Heb je schrijfrechten?')}}
+});
+document.addEventListener('submit',async e=>{
+  if(e.target.id==='tripform'){e.preventDefault(); form.name=document.getElementById('f-name').value.trim(); const st=document.getElementById('f-status');
+    if(!form.name){st.textContent='Geef de trip een naam.';return} if(!form.countries.length){st.textContent='Kies minstens één land.';return}
+    st.textContent='Opslaan…'; const t={...form}; try{await saveTrip(t); form=null; go('trips','trip-'+t.id)}catch(err){st.textContent='Opslaan lukte niet'+(err?.code==='invalid_argument'?': je hebt geen schrijfrechten.':'. Probeer het opnieuw.')}}
+  if(e.target.id==='addown'){e.preventDefault(); const inp=document.getElementById('ownin'); const v=inp.value.trim(); if(!v)return; const t=curTrip(); if(!t)return;
+    const custom=[...(t.custom||[]),{k:'o-'+Date.now().toString(36),txt:v}]; inp.value=''; try{await saveTrip({...t,custom})}catch(err){alertBox('Toevoegen lukte niet.')}}
+});
+function curTrip(){return S.trips.find(x=>route.detail==='trip-'+x.id)}
+function alertBox(m){const d=document.createElement('div');d.className='bad';d.setAttribute('role','alert');d.innerHTML=svg('alert')+'<p></p>';d.querySelector('p').textContent=m;V.detail.prepend(d);setTimeout(()=>d.remove(),5000)}
+q.addEventListener('input',renderGids);
+window.addEventListener('hashchange',fromHash);
+
+fromHash();
+initStore();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Alleen deze Google-accounts mogen lezen en schrijven. Pas de lijst aan.
+    function allowed() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'JOUW_GOOGLE_ADRES@gmail.com',
+          'REISGENOOT@gmail.com'
+        ];
+    }
+    match /trips/{tripId} {
+      allow read, write: if allowed();
+      match /checks/{checkId} {
+        allow read, write: if allowed();
+      }
+    }
+    // Al het andere is dicht.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
