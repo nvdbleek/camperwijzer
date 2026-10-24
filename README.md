@@ -6,7 +6,7 @@ De site bestaat uit drie bestanden: `index.html`, `firebase-config.js` en `fires
 
 1. Ga naar https://console.firebase.google.com en kies **Project toevoegen**. Geef het een naam, bv. `camperwijzer`. Google Analytics mag uit.
 2. **Firestore**: menu *Build → Firestore Database → Database maken*. Kies een locatie in Europa (bv. `europe-west`) en start in **productiemodus**.
-3. **Regels**: open in Firestore het tabblad *Regels*. Plak de inhoud van `firestore.rules` en vul jullie eigen Google-adressen in. Klik **Publiceren**. Alleen die adressen kunnen de trips lezen en afvinken.
+3. **Regels**: open in Firestore het tabblad *Regels*. Plak de inhoud van `firestore.rules` en klik **Publiceren**. Iedereen met een Google-account op `@bleeken.eu` kan de trips lezen en afvinken.
 4. **Inloggen**: menu *Build → Authentication → Aan de slag → Google*. Zet die aan en sla op.
 5. **Web-app**: ga naar *Projectinstellingen* (tandwiel) → *Je apps* → het web-icoon `</>`. Geef een naam; Hosting is niet nodig. Kopieer het `firebaseConfig`-blok naar `firebase-config.js` op de plek van de `VUL_IN`-waarden.
 
@@ -23,7 +23,7 @@ In Firebase: *Authentication → Settings → Authorized domains → Domein toev
 
 ## Goed om te weten
 
-- **Is de config geheim?** Nee, die waarden zijn openbaar bedoeld. De beveiliging zit in de Firestore-regels met de lijst van toegestane e-mailadressen. Iemand toevoegen: zet het adres in die lijst en publiceer de regels opnieuw.
+- **Is de config geheim?** Nee, die waarden zijn openbaar bedoeld. De beveiliging zit in de Firestore-regels: alleen geverifieerde Google-accounts op `@bleeken.eu` hebben toegang.
 - **Kosten:** het gratis Spark-abonnement is ruim genoeg voor dit gebruik. Een betaalkaart is niet nodig.
 - **Zonder Firebase** werkt de site ook. Je ziet dan een melding en de trips blijven op het eigen toestel.
 - **Op je telefoon:** open de site en kies in het browsermenu *Zet op beginscherm*. Dan opent hij als een app.
